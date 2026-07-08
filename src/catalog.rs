@@ -113,7 +113,7 @@ const REPO_META: &[(&str, RepoMeta)] = &[
         },
     ),
     (
-        "sigma-racer-specs",
+        "sigma-racer",
         RepoMeta {
             section_id: "vehicle",
             relevance: "Authoritative build specs—mechanical, electrical, and system documents.",
