@@ -1,0 +1,6 @@
+/target
+/build
+.cargo/
+sigma-theme
+ts/node_modules
+.cursor/

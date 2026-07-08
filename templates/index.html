@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Open Source — Sigma Tactical Group{% endblock %}
+
+{% block main_class %}home-main{% endblock %}
+
+{% block content %}
+      <div class="hero-shell">
+        <div class="hero-content-layer">
+          <h1><span class="brand-wordmark">Open Source</span></h1>
+          <p class="product-lead mt-3">
+            Public repositories from
+            <a class="product-back" href="https://github.com/{{ github_org|safe }}" rel="noopener noreferrer">@{{ github_org|safe }}</a>.
+          </p>
+        </div>
+      </div>
+
+      <section class="container py-4">
+        {% if !repos.is_empty() %}
+        <div class="row g-4">
+          {% for repo in repos %}
+          <div class="col-md-6 col-lg-4">
+            <article class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column">
+                <h2 class="h5 card-title mb-2">
+                  <a href="{{ repo.url|safe }}" rel="noopener noreferrer">{{ repo.name|safe }}</a>
+                </h2>
+                {% if !repo.description.is_empty() %}
+                <p class="card-text flex-grow-1">{{ repo.description|safe }}</p>
+                {% else %}
+                <p class="card-text flex-grow-1 text-muted">No description provided.</p>
+                {% endif %}
+                <p class="card-text small text-muted mb-0">
+                  {% if !repo.language.is_empty() %}{{ repo.language|safe }} · {% endif %}{{ repo.stars }} stars
+                </p>
+              </div>
+            </article>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        {% if !repos_error.is_empty() %}
+        <p class="text-muted">Repository list is temporarily unavailable. Try again later.</p>
+        {% else %}
+        <p class="text-muted">No public repositories to show yet.</p>
+        {% endif %}
+        {% endif %}
+      </section>
+{% endblock %}
