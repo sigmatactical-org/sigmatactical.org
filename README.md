@@ -17,11 +17,11 @@ repositories from the configured GitHub organization using the shared
 
 ## GitHub metadata
 
-Curated repository descriptions (and optional homepages) live in
-`scripts/sync-github-descriptions.sh`. Run after editing copy in `src/catalog.rs`:
+Curated repository descriptions, production homepages, and topics live in
+`scripts/sync-github-metadata.sh`. Run after editing copy in `src/catalog.rs`:
 
 ```bash
-./scripts/sync-github-descriptions.sh
+./scripts/sync-github-metadata.sh
 ```
 
 ## Local dev

@@ -108,7 +108,7 @@ const REPO_META: &[(&str, RepoMeta)] = &[
         RepoMeta {
             section_id: "vehicle",
             relevance: "M7 safety-core firmware (Embassy) and shared CAN contract for the Wingman cluster.",
-            description: "All-Rust M7 safety-core firmware and sigma-racer-wingman-m7-can CAN dictionary for the Sigma Racer Wingman cluster.",
+            description: "All-Rust M7 safety-core firmware and M7 safety-bus CAN dictionary for the Sigma Racer Wingman cluster.",
             order: 40,
         },
     ),
@@ -128,6 +128,24 @@ const REPO_META: &[(&str, RepoMeta)] = &[
             relevance: "Shared types and instrumentation glue across vehicle software.",
             description: "Shared instrumentation types and logging utilities for Sigma vehicle software.",
             order: 60,
+        },
+    ),
+    (
+        "sigma-racer-telemetry",
+        RepoMeta {
+            section_id: "vehicle",
+            relevance: "VSS state, M7 CAN bridge, and NDJSON IPC shared by cluster and vehicle daemons.",
+            description: "VSS vehicle state, M7 CAN bridge, and NDJSON IPC for Sigma Racer cockpit services.",
+            order: 70,
+        },
+    ),
+    (
+        "sigma-racer-vehicle",
+        RepoMeta {
+            section_id: "vehicle",
+            relevance: "Linux daemon that normalizes CAN/sim into VSS telemetry for the cockpit UI.",
+            description: "Linux vehicle daemon: CAN/sim to VSS telemetry for the Sigma Racer cockpit.",
+            order: 80,
         },
     ),
     (
