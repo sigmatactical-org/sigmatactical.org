@@ -7,42 +7,82 @@
 {% block content %}
       <div class="hero-shell">
         <div class="hero-content-layer">
-          <h1><span class="brand-wordmark">Open Source</span></h1>
+          <h1><span class="brand-wordmark">Own your vehicle&rsquo;s software</span></h1>
           <p class="product-lead mt-3">
-            Public repositories from
+            A vehicle should not become a black box that stops evolving when a vendor moves on.
+            Sigma Tactical Group publishes the libraries, firmware, and services behind
+            <strong>Sigma Racer</strong> so owners, builders, and integrators can inspect,
+            extend, and keep their machines running on their own terms.
+          </p>
+          <p class="mt-3">
+            Everything below lives in
             <a class="product-back" href="https://github.com/{{ github_org|safe }}" rel="noopener noreferrer">@{{ github_org|safe }}</a>.
+            Clone it, fork it, run it in your garage or on your cluster.
           </p>
         </div>
       </div>
 
       <section class="container py-4">
-        {% if !repos.is_empty() %}
-        <div class="row g-4">
-          {% for repo in repos %}
-          <div class="col-md-6 col-lg-4">
-            <article class="card h-100 shadow-sm">
-              <div class="card-body d-flex flex-column">
-                <h2 class="h5 card-title mb-2">
-                  <a href="{{ repo.url|safe }}" rel="noopener noreferrer">{{ repo.name|safe }}</a>
-                </h2>
-                {% if !repo.description.is_empty() %}
-                <p class="card-text flex-grow-1">{{ repo.description|safe }}</p>
-                {% else %}
-                <p class="card-text flex-grow-1 text-muted">No description provided.</p>
-                {% endif %}
-                <p class="card-text small text-muted mb-0">
-                  {% if !repo.language.is_empty() %}{{ repo.language|safe }} · {% endif %}{{ repo.stars }} stars
-                </p>
-              </div>
-            </article>
+        <div class="row justify-content-center mb-4">
+          <div class="col-lg-10">
+            <h2 class="h4 mb-3">Why we open-source</h2>
+            <p>
+              Modern vehicles are computers on wheels. When the stack is closed, you inherit
+              someone else&rsquo;s roadmap, their end-of-life date, and their idea of what you
+              are allowed to change. Open code flips that: calibration, instrumentation,
+              commerce, and operations become yours to study, improve, and operate.
+            </p>
+            <p class="mb-0">
+              Use the sections below to find what matters for your work—vehicle firmware,
+              bench tooling, commerce services, shared platform code, and public sites.
+            </p>
           </div>
-          {% endfor %}
         </div>
+
+        {% if !sections.is_empty() %}
+        <nav class="row justify-content-center mb-5" aria-label="Repository sections">
+          <div class="col-lg-10">
+            <ul class="list-inline mb-0">
+              {% for section in sections %}
+              <li class="list-inline-item me-3 mb-2">
+                <a class="product-back" href="#{{ section.id|safe }}">{{ section.title|safe }}</a>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </nav>
+
+        {% for section in sections %}
+        <div id="{{ section.id|safe }}" class="row justify-content-center mb-5">
+          <div class="col-lg-10">
+            <h2 class="h3 mb-2">{{ section.title|safe }}</h2>
+            <p class="text-muted mb-4">{{ section.intro|safe }}</p>
+            <div class="row g-4">
+              {% for repo in section.repos %}
+              <div class="col-md-6">
+                <article class="card h-100 shadow-sm">
+                  <div class="card-body d-flex flex-column">
+                    <h3 class="h5 card-title mb-2">
+                      <a href="{{ repo.url|safe }}" rel="noopener noreferrer">{{ repo.name|safe }}</a>
+                    </h3>
+                    <p class="card-text"><strong>Why it matters:</strong> {{ repo.relevance|safe }}</p>
+                    <p class="card-text flex-grow-1 text-muted">{{ repo.description|safe }}</p>
+                    <p class="card-text small text-muted mb-0">
+                      {% if !repo.language.is_empty() %}{{ repo.language|safe }} · {% endif %}{{ repo.stars }} stars
+                    </p>
+                  </div>
+                </article>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
         {% else %}
         {% if !repos_error.is_empty() %}
-        <p class="text-muted">Repository list is temporarily unavailable. Try again later.</p>
+        <p class="text-muted text-center">Repository list is temporarily unavailable. Try again later.</p>
         {% else %}
-        <p class="text-muted">No public repositories to show yet.</p>
+        <p class="text-muted text-center">No public repositories to show yet.</p>
         {% endif %}
         {% endif %}
       </section>

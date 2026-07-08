@@ -20,7 +20,7 @@ async fn get_root_is_html() {
     );
     let body = std::str::from_utf8(res.body()).expect("utf-8 body");
     assert!(body.contains("sigma-dial-root"));
-    assert!(body.contains("Open Source"));
+    assert!(body.contains("Own your vehicle"));
 }
 
 #[tokio::test]

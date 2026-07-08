@@ -4,6 +4,7 @@ use sigma_theme::copyright_years;
 use sigma_theme::nav::SiteHeader;
 use sigma_theme::site_nav::{AppSiteNav, render_app_site_nav};
 
+use crate::catalog::RepoSection;
 use crate::repos::RepoView;
 
 fn site_nav() -> Result<String, askama::Error> {
@@ -26,7 +27,7 @@ struct IndexTemplate {
     site_header: SiteHeader,
     site_nav: String,
     github_org: String,
-    repos: Vec<RepoView>,
+    sections: Vec<RepoSection>,
     repos_error: String,
     copyright_years: String,
 }
@@ -39,7 +40,7 @@ pub fn render_index_html(repos: &[RepoView], repos_error: &str) -> Result<String
         site_header: SiteHeader::new("Sigma Tactical Group"),
         site_nav: site_nav()?,
         github_org: crate::config::github_org(),
-        repos: repos.to_vec(),
+        sections: crate::catalog::build_sections(repos.to_vec()),
         repos_error: repos_error.to_string(),
         copyright_years: copyright_years(),
     }

@@ -1,5 +1,6 @@
 //! sigmatactical.org: open-source showcase with shared theme and GitHub org listing.
 
+mod catalog;
 mod config;
 mod repos;
 mod templates;
@@ -90,16 +91,21 @@ mod tests {
     use warp::http::StatusCode;
 
     #[test]
-    fn rendered_html_contains_title_and_repo_section() {
-        let html = templates::render_index_html(&[], "").expect("template should render");
+    fn rendered_html_contains_ownership_message_and_sections() {
+        let repos = vec![repos::RepoView {
+            name: "dbc-rs".to_string(),
+            url: "https://github.com/sigmatactical-org/dbc-rs".to_string(),
+            description: "DBC library".to_string(),
+            language: "Rust".to_string(),
+            stars: 12,
+        }];
+        let html = templates::render_index_html(&repos, "").expect("template should render");
         assert!(html.contains("<title>Open Source — Sigma Tactical Group</title>"));
-        assert!(html.contains("sigma-dial-root"));
-        assert!(html.contains("Open Source"));
-        assert!(html.contains("sigmatactical-org"));
-        assert!(html.contains(&format!(
-            "&copy; {} Sigma Tactical Group",
-            copyright_years()
-        )));
+        assert!(html.contains("Own your vehicle"));
+        assert!(html.contains("Why we open-source"));
+        assert!(html.contains("Data formats & bench tooling"));
+        assert!(html.contains("Why it matters:"));
+        assert!(html.contains("dbc-rs"));
     }
 
     #[test]
@@ -113,7 +119,7 @@ mod tests {
         }];
         let html = templates::render_index_html(&repos, "").expect("template");
         assert!(html.contains("dbc-rs"));
-        assert!(html.contains("DBC tooling"));
+        assert!(html.contains("CAN networks"));
         assert!(html.contains("12 stars"));
     }
 
