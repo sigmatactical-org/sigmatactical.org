@@ -32,10 +32,24 @@ declare -A DESCRIPTIONS=(
   [sigmatactical.org]="Open-source showcase for Sigma Tactical Group GitHub repositories."
 )
 
+declare -A HOMEPAGES=(
+  [sigmatactical.org]="https://sigmatactical.org"
+  [sigmatacticalgroup.com]="https://sigmatacticalgroup.com"
+  [sigma-tactical.com]="https://sigma-tactical.com"
+  [store]="https://sigmatactical.store"
+  [info]="https://sigmatactical.info"
+  [services]="https://services.sigma-tactical.com"
+  [dbc-rs]="https://crates.io/crates/dbc-rs"
+)
+
 for repo in "${!DESCRIPTIONS[@]}"; do
   desc="${DESCRIPTIONS[$repo]}"
   echo "==> ${ORG}/${repo}"
-  gh repo edit "${ORG}/${repo}" --description "$desc"
+  if [[ -n "${HOMEPAGES[$repo]:-}" ]]; then
+    gh repo edit "${ORG}/${repo}" --description "$desc" --homepage "${HOMEPAGES[$repo]}"
+  else
+    gh repo edit "${ORG}/${repo}" --description "$desc"
+  fi
 done
 
 echo "Updated ${#DESCRIPTIONS[@]} repository descriptions."

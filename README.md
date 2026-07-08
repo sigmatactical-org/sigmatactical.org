@@ -15,6 +15,15 @@ repositories from the configured GitHub organization using the shared
 | `STORG_CART_PUBLIC_URL` | Cart service for nav |
 | `STORG_GITHUB_ORG` | GitHub org to list (default `sigmatactical-org`) |
 
+## GitHub metadata
+
+Curated repository descriptions (and optional homepages) live in
+`scripts/sync-github-descriptions.sh`. Run after editing copy in `src/catalog.rs`:
+
+```bash
+./scripts/sync-github-descriptions.sh
+```
+
 ## Local dev
 
 ```bash
