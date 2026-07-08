@@ -104,11 +104,11 @@ const REPO_META: &[(&str, RepoMeta)] = &[
         },
     ),
     (
-        "cafe-racer-sidearm",
+        "sigma-racer-sidearm",
         RepoMeta {
             section_id: "vehicle",
-            relevance: "Safety-core M7 firmware (Embassy) for the Wingman cluster on i.MX8M Plus.",
-            description: "All-Rust M7 safety-core firmware for the Sigma Racer Wingman cluster (Embassy).",
+            relevance: "M7 safety-core firmware (Embassy) and shared CAN contract for the Wingman cluster.",
+            description: "All-Rust M7 safety-core firmware and sigma-racer-wingman-m7-can CAN dictionary for the Sigma Racer Wingman cluster.",
             order: 40,
         },
     ),
