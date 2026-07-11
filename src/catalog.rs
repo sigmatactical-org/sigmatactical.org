@@ -440,7 +440,10 @@ mod tests {
         assert_eq!(primary_workflow("can-viewer"), Some("ci.yml"));
         assert_eq!(primary_workflow("dbc-rs"), Some("dbc-rs.yml"));
         assert_eq!(primary_workflow("mdf4-rs"), Some("mdf4-rs.yml"));
-        assert_eq!(primary_workflow("sigma-racer-wingman"), Some("yocto-virt.yml"));
+        assert_eq!(
+            primary_workflow("sigma-racer-wingman"),
+            Some("yocto-virt.yml")
+        );
         assert_eq!(primary_workflow("sigma-racer"), None);
         assert_eq!(primary_workflow("sigma-racer-vehicle"), None);
         assert_eq!(primary_workflow("not-a-repo"), None);
@@ -455,7 +458,11 @@ mod tests {
                 .to_string(),
         });
         let sections = build_sections(vec![repo]);
-        let enriched = &sections.iter().find(|s| s.id == "data").expect("data").repos[0];
+        let enriched = &sections
+            .iter()
+            .find(|s| s.id == "data")
+            .expect("data")
+            .repos[0];
         assert_eq!(
             enriched.build.as_ref().map(|b| b.state),
             Some(crate::repos::BuildState::Passing)

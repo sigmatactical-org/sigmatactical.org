@@ -215,9 +215,10 @@ async fn attach_build_statuses(client: &reqwest::Client, repos: &mut [RepoView])
             repo.default_branch.clone()
         };
         set.spawn(async move {
-            let status =
-                fetch_build_status(&client, &api_base, &org, &name, &html_url, &branch, workflow)
-                    .await;
+            let status = fetch_build_status(
+                &client, &api_base, &org, &name, &html_url, &branch, workflow,
+            )
+            .await;
             (idx, status)
         });
     }
