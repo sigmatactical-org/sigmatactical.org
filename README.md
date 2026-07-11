@@ -43,3 +43,9 @@ docker build -f Dockerfile build/image
 ## Copyright
 
 © Sigma Tactical Group. All rights reserved.
+
+## Brand & artwork
+
+© Sigma Tactical Group. **All rights reserved.**
+
+The Sigma Tactical Group name, logos, marks, artwork, and visual identity are **proprietary**. They are not covered by this repository's source-code license. See [BRANDING.md](BRANDING.md).
