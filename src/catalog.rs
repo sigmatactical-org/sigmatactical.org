@@ -1,6 +1,6 @@
 //! Curated copy and grouping for repositories shown on sigmatactical.org.
 
-use crate::repos::RepoView;
+use crate::repos::{BuildStatus, RepoView};
 
 /// A themed group of repositories with an introduction.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -20,6 +20,7 @@ pub struct EnrichedRepo {
     pub relevance: String,
     pub language: String,
     pub stars: u32,
+    pub build: Option<BuildStatus>,
 }
 
 struct RepoMeta {
@@ -164,6 +165,15 @@ const REPO_META: &[(&str, RepoMeta)] = &[
             relevance: "Read and write ASAM MDF4 logs from dyno, track, and field capture.",
             description: "Rust library for reading and writing ASAM MDF 4 measurement data files.",
             order: 20,
+        },
+    ),
+    (
+        "can-viewer",
+        RepoMeta {
+            section_id: "data",
+            relevance: "Desktop viewer for CAN logs and DBC files—inspect captures off the bench.",
+            description: "Desktop CAN bus log and DBC inspection tool built on dbc-rs and mdf4-rs.",
+            order: 30,
         },
     ),
     (
@@ -328,6 +338,23 @@ fn meta_for(name: &str) -> Option<&'static RepoMeta> {
         .map(|(_, meta)| meta)
 }
 
+/// Primary CI workflow file for a repo, used to fetch/display build status.
+///
+/// Returns `None` for repos we don't publish CI for. Curated repos default to
+/// `ci.yml`; the handful with a differently named primary workflow are listed
+/// explicitly. Repos absent from the catalog get no badge.
+#[must_use]
+pub fn primary_workflow(name: &str) -> Option<&'static str> {
+    match name {
+        "dbc-rs" => Some("dbc-rs.yml"),
+        "mdf4-rs" => Some("mdf4-rs.yml"),
+        "sigma-racer-wingman" => Some("yocto-virt.yml"),
+        // Docs/spec repos with no CI pipeline.
+        "sigma-racer" | "sigma-racer-vehicle" => None,
+        other => meta_for(other).map(|_| "ci.yml"),
+    }
+}
+
 fn enrich(repo: RepoView) -> (EnrichedRepo, &'static str, u16) {
     let meta = meta_for(&repo.name);
     let section_id = meta.map(|m| m.section_id).unwrap_or("platform");
@@ -350,6 +377,7 @@ fn enrich(repo: RepoView) -> (EnrichedRepo, &'static str, u16) {
             relevance: relevance.to_string(),
             language: repo.language,
             stars: repo.stars,
+            build: repo.build,
         },
         section_id,
         order,
@@ -401,7 +429,37 @@ mod tests {
             description: String::new(),
             language: "Rust".to_string(),
             stars: 0,
+            default_branch: "main".to_string(),
+            build: None,
         }
+    }
+
+    #[test]
+    fn primary_workflow_maps_known_repos() {
+        assert_eq!(primary_workflow("sigma-racer-efi"), Some("ci.yml"));
+        assert_eq!(primary_workflow("can-viewer"), Some("ci.yml"));
+        assert_eq!(primary_workflow("dbc-rs"), Some("dbc-rs.yml"));
+        assert_eq!(primary_workflow("mdf4-rs"), Some("mdf4-rs.yml"));
+        assert_eq!(primary_workflow("sigma-racer-wingman"), Some("yocto-virt.yml"));
+        assert_eq!(primary_workflow("sigma-racer"), None);
+        assert_eq!(primary_workflow("sigma-racer-vehicle"), None);
+        assert_eq!(primary_workflow("not-a-repo"), None);
+    }
+
+    #[test]
+    fn build_status_passes_through_enrichment() {
+        let mut repo = sample_repo("dbc-rs");
+        repo.build = Some(BuildStatus {
+            state: crate::repos::BuildState::Passing,
+            url: "https://github.com/sigmatactical-org/dbc-rs/actions/workflows/dbc-rs.yml"
+                .to_string(),
+        });
+        let sections = build_sections(vec![repo]);
+        let enriched = &sections.iter().find(|s| s.id == "data").expect("data").repos[0];
+        assert_eq!(
+            enriched.build.as_ref().map(|b| b.state),
+            Some(crate::repos::BuildState::Passing)
+        );
     }
 
     #[test]

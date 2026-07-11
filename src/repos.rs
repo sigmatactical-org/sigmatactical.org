@@ -9,8 +9,59 @@ use tokio::sync::RwLock;
 
 use crate::config;
 
-const CACHE_TTL: Duration = Duration::from_secs(15 * 60);
+// Repos and their CI status change slowly; cache long enough that a single
+// refresh burst (one call per repo with a workflow) stays well under GitHub's
+// unauthenticated rate limit. Set STORG_GITHUB_TOKEN to lift the limit.
+const CACHE_TTL: Duration = Duration::from_secs(30 * 60);
 const USER_AGENT: &str = "sigmatactical-org/0.1 (+https://sigmatactical.org)";
+
+/// Outcome of a repository's latest CI run on its default branch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BuildState {
+    Passing,
+    Failing,
+    Pending,
+}
+
+impl BuildState {
+    /// Bootstrap contextual class for the status pill.
+    #[must_use]
+    pub const fn css_class(self) -> &'static str {
+        match self {
+            BuildState::Passing => "text-bg-success",
+            BuildState::Failing => "text-bg-danger",
+            BuildState::Pending => "text-bg-secondary",
+        }
+    }
+
+    /// Human-readable label for the status pill.
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            BuildState::Passing => "CI passing",
+            BuildState::Failing => "CI failing",
+            BuildState::Pending => "CI pending",
+        }
+    }
+
+    fn from_run(status: &str, conclusion: Option<&str>) -> Self {
+        if status != "completed" {
+            return BuildState::Pending;
+        }
+        match conclusion {
+            Some("success") => BuildState::Passing,
+            Some("failure" | "timed_out" | "startup_failure" | "cancelled") => BuildState::Failing,
+            _ => BuildState::Pending,
+        }
+    }
+}
+
+/// Build status shown on a repository card (state + link to the workflow runs).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BuildStatus {
+    pub state: BuildState,
+    pub url: String,
+}
 
 /// One repository row on the home page.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -20,6 +71,8 @@ pub struct RepoView {
     pub description: String,
     pub language: String,
     pub stars: u32,
+    pub default_branch: String,
+    pub build: Option<BuildStatus>,
 }
 
 #[derive(Debug, Error)]
@@ -39,6 +92,20 @@ struct GithubRepo {
     stargazers_count: u32,
     archived: bool,
     fork: bool,
+    #[serde(default)]
+    default_branch: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct WorkflowRunsResponse {
+    #[serde(default)]
+    workflow_runs: Vec<WorkflowRun>,
+}
+
+#[derive(Debug, Deserialize)]
+struct WorkflowRun {
+    status: String,
+    conclusion: Option<String>,
 }
 
 struct CacheState {
@@ -91,18 +158,24 @@ impl ReposCache {
     }
 }
 
+/// Apply the standard GitHub headers (and auth token, when configured).
+fn github_headers(builder: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+    let builder = builder
+        .header(reqwest::header::USER_AGENT, USER_AGENT)
+        .header(reqwest::header::ACCEPT, "application/vnd.github+json");
+    match config::github_token() {
+        Some(token) => builder.header(reqwest::header::AUTHORIZATION, format!("Bearer {token}")),
+        None => builder,
+    }
+}
+
 async fn fetch_org_repos(client: &reqwest::Client) -> Result<Vec<RepoView>, ReposError> {
     let org = config::github_org();
     let url = format!(
         "{}/orgs/{org}/repos?per_page=100&sort=updated&type=public",
         config::github_api_base()
     );
-    let response = client
-        .get(&url)
-        .header(reqwest::header::USER_AGENT, USER_AGENT)
-        .header(reqwest::header::ACCEPT, "application/vnd.github+json")
-        .send()
-        .await?;
+    let response = github_headers(client.get(&url)).send().await?;
 
     if !response.status().is_success() {
         return Err(ReposError::Api(format!(
@@ -112,7 +185,72 @@ async fn fetch_org_repos(client: &reqwest::Client) -> Result<Vec<RepoView>, Repo
     }
 
     let entries: Vec<GithubRepo> = response.json().await?;
-    Ok(entries_to_views(entries))
+    let mut repos = entries_to_views(entries);
+    attach_build_statuses(client, &mut repos).await;
+    Ok(repos)
+}
+
+/// Fetch the latest default-branch CI run for every repo with a known workflow
+/// (see [`crate::catalog::primary_workflow`]) and attach it as [`BuildStatus`].
+/// Runs concurrently; any per-repo failure simply leaves that repo without a pill.
+async fn attach_build_statuses(client: &reqwest::Client, repos: &mut [RepoView]) {
+    let org = config::github_org();
+    let api_base = config::github_api_base();
+
+    let mut set = tokio::task::JoinSet::new();
+    for (idx, repo) in repos.iter().enumerate() {
+        let Some(workflow) = crate::catalog::primary_workflow(&repo.name) else {
+            continue;
+        };
+        let client = client.clone();
+        let (org, api_base, name, html_url) = (
+            org.clone(),
+            api_base.clone(),
+            repo.name.clone(),
+            repo.url.clone(),
+        );
+        let branch = if repo.default_branch.is_empty() {
+            "main".to_string()
+        } else {
+            repo.default_branch.clone()
+        };
+        set.spawn(async move {
+            let status =
+                fetch_build_status(&client, &api_base, &org, &name, &html_url, &branch, workflow)
+                    .await;
+            (idx, status)
+        });
+    }
+
+    while let Some(joined) = set.join_next().await {
+        if let Ok((idx, Some(status))) = joined {
+            repos[idx].build = Some(status);
+        }
+    }
+}
+
+async fn fetch_build_status(
+    client: &reqwest::Client,
+    api_base: &str,
+    org: &str,
+    name: &str,
+    html_url: &str,
+    branch: &str,
+    workflow: &str,
+) -> Option<BuildStatus> {
+    let url = format!(
+        "{api_base}/repos/{org}/{name}/actions/workflows/{workflow}/runs?branch={branch}&per_page=1"
+    );
+    let response = github_headers(client.get(&url)).send().await.ok()?;
+    if !response.status().is_success() {
+        return None;
+    }
+    let body: WorkflowRunsResponse = response.json().await.ok()?;
+    let run = body.workflow_runs.into_iter().next()?;
+    Some(BuildStatus {
+        state: BuildState::from_run(&run.status, run.conclusion.as_deref()),
+        url: format!("{html_url}/actions/workflows/{workflow}"),
+    })
 }
 
 fn entries_to_views(entries: Vec<GithubRepo>) -> Vec<RepoView> {
@@ -125,6 +263,8 @@ fn entries_to_views(entries: Vec<GithubRepo>) -> Vec<RepoView> {
             description: repo.description.unwrap_or_default(),
             language: repo.language.unwrap_or_default(),
             stars: repo.stargazers_count,
+            default_branch: repo.default_branch,
+            build: None,
         })
         .collect();
     repos.sort_by(|a, b| b.stars.cmp(&a.stars).then_with(|| a.name.cmp(&b.name)));

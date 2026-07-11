@@ -98,6 +98,8 @@ mod tests {
             description: "DBC library".to_string(),
             language: "Rust".to_string(),
             stars: 12,
+            default_branch: "main".to_string(),
+            build: None,
         }];
         let html = templates::render_index_html(&repos, "").expect("template should render");
         assert!(html.contains("<title>Open Source — Sigma Tactical Group</title>"));
@@ -116,6 +118,8 @@ mod tests {
             description: "DBC tooling".to_string(),
             language: "Rust".to_string(),
             stars: 12,
+            default_branch: "main".to_string(),
+            build: None,
         }];
         let html = templates::render_index_html(&repos, "").expect("template");
         assert!(html.contains("dbc-rs"));

@@ -61,6 +61,19 @@ pub fn github_org() -> String {
         .unwrap_or_else(|| "sigmatactical-org".to_string())
 }
 
+/// Optional GitHub token for authenticated API calls (raises rate limits).
+///
+/// Reads `STORG_GITHUB_TOKEN`, falling back to `GITHUB_TOKEN`. Unset means
+/// unauthenticated requests (fine for public data, lower rate limit).
+#[must_use]
+pub fn github_token() -> Option<String> {
+    std::env::var("STORG_GITHUB_TOKEN")
+        .or_else(|_| std::env::var("GITHUB_TOKEN"))
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+}
+
 /// Optional override for the GitHub REST API base (testing only).
 #[must_use]
 pub fn github_api_base() -> String {
