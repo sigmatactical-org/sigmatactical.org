@@ -168,7 +168,7 @@ const REPO_META: &[(&str, RepoMeta)] = &[
         },
     ),
     (
-        "can-viewer",
+        "diagnostics",
         RepoMeta {
             section_id: "data",
             relevance: "Desktop viewer for CAN logs and DBC files—inspect captures off the bench.",
@@ -446,7 +446,7 @@ mod tests {
     #[test]
     fn primary_workflow_maps_known_repos() {
         assert_eq!(primary_workflow("sigma-racer-efi"), Some("ci.yml"));
-        assert_eq!(primary_workflow("can-viewer"), Some("ci.yml"));
+        assert_eq!(primary_workflow("diagnostics"), Some("ci.yml"));
         assert_eq!(primary_workflow("dbc-rs"), Some("dbc-rs.yml"));
         assert_eq!(primary_workflow("mdf4-rs"), Some("mdf4-rs.yml"));
         assert_eq!(
