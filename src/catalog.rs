@@ -204,7 +204,7 @@ const REPO_META: &[(&str, RepoMeta)] = &[
         },
     ),
     (
-        "order",
+        "orders",
         RepoMeta {
             section_id: "commerce",
             relevance: "Order capture, deposits, and fulfillment state after cart submit.",
