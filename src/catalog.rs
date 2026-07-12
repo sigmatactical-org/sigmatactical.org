@@ -303,6 +303,15 @@ const REPO_META: &[(&str, RepoMeta)] = &[
         },
     ),
     (
+        "updates",
+        RepoMeta {
+            section_id: "platform",
+            relevance: "Debian package index and RAUC OTA catalog serving the Wingman fleet.",
+            description: "Debian package index and OTA catalog for Sigma Racer Wingman.",
+            order: 90,
+        },
+    ),
+    (
         "sigmatacticalgroup.com",
         RepoMeta {
             section_id: "sites",
@@ -349,8 +358,8 @@ pub fn primary_workflow(name: &str) -> Option<&'static str> {
         "dbc-rs" => Some("dbc-rs.yml"),
         "mdf4-rs" => Some("mdf4-rs.yml"),
         "sigma-racer-wingman" => Some("yocto-virt.yml"),
-        // Docs/spec repos with no CI pipeline.
-        "sigma-racer" | "sigma-racer-vehicle" => None,
+        // Docs/spec repo with no CI pipeline.
+        "sigma-racer" => None,
         other => meta_for(other).map(|_| "ci.yml"),
     }
 }
@@ -445,7 +454,8 @@ mod tests {
             Some("yocto-virt.yml")
         );
         assert_eq!(primary_workflow("sigma-racer"), None);
-        assert_eq!(primary_workflow("sigma-racer-vehicle"), None);
+        assert_eq!(primary_workflow("sigma-racer-vehicle"), Some("ci.yml"));
+        assert_eq!(primary_workflow("updates"), Some("ci.yml"));
         assert_eq!(primary_workflow("not-a-repo"), None);
     }
 
