@@ -213,6 +213,24 @@ const REPO_META: &[(&str, RepoMeta)] = &[
         },
     ),
     (
+        "addresses",
+        RepoMeta {
+            section_id: "commerce",
+            relevance: "Billing and shipping addresses shared across checkout and payments.",
+            description: "Billing and shipping address service for Sigma Tactical Group identity users.",
+            order: 41,
+        },
+    ),
+    (
+        "payments",
+        RepoMeta {
+            section_id: "commerce",
+            relevance: "Saved payment methods tied to a user's billing address.",
+            description: "Payment method service for Sigma Tactical Group identity users.",
+            order: 42,
+        },
+    ),
+    (
         "contact",
         RepoMeta {
             section_id: "commerce",
