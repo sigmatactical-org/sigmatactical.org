@@ -1,5 +1,7 @@
 //! sigmatactical.org: open-source showcase with shared theme and GitHub org listing.
 
+#![forbid(unsafe_code)]
+
 mod catalog;
 mod config;
 mod repos;

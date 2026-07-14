@@ -142,7 +142,7 @@ const REPO_META: &[(&str, RepoMeta)] = &[
         },
     ),
     (
-        "diagnostics",
+        "sigma-diagnostics",
         RepoMeta {
             section_id: "data",
             relevance: "Desktop viewer for CAN logs and DBC files—inspect captures off the bench.",
@@ -238,6 +238,15 @@ const REPO_META: &[(&str, RepoMeta)] = &[
             relevance: "Shared PostgreSQL migrations, health checks, and internal API auth.",
             description: "Shared PostgreSQL helpers and schema migrations for Sigma web services.",
             order: 20,
+        },
+    ),
+    (
+        "design-resources",
+        RepoMeta {
+            section_id: "platform",
+            relevance: "Logos and brand assets referenced by the sites and product repos.",
+            description: "Sigma Tactical Group brand and design assets (logo, marks).",
+            order: 95,
         },
     ),
     (
@@ -341,17 +350,14 @@ fn meta_for(name: &str) -> Option<&'static RepoMeta> {
 
 /// Primary CI workflow file for a repo, used to fetch/display build status.
 ///
-/// Returns `None` for repos we don't publish CI for. Curated repos default to
-/// `ci.yml`; the handful with a differently named primary workflow are listed
-/// explicitly. Repos absent from the catalog get no badge.
+/// Returns `None` for repos we don't publish CI for. Every curated repo's
+/// primary gate is its `ci.yml` workflow; repos absent from the catalog get
+/// no badge.
 #[must_use]
 pub fn primary_workflow(name: &str) -> Option<&'static str> {
     match name {
-        "dbc-rs" => Some("dbc-rs.yml"),
-        "mdf4-rs" => Some("mdf4-rs.yml"),
-        "sigma-racer-wingman" => Some("yocto-virt.yml"),
-        // Docs/spec repo with no CI pipeline.
-        "sigma-racer" => None,
+        // Docs/asset repos with no CI pipeline.
+        "sigma-racer" | "design-resources" => None,
         other => meta_for(other).map(|_| "ci.yml"),
     }
 }
@@ -439,14 +445,12 @@ mod tests {
     #[test]
     fn primary_workflow_maps_known_repos() {
         assert_eq!(primary_workflow("sigma-racer-efi"), Some("ci.yml"));
-        assert_eq!(primary_workflow("diagnostics"), Some("ci.yml"));
-        assert_eq!(primary_workflow("dbc-rs"), Some("dbc-rs.yml"));
-        assert_eq!(primary_workflow("mdf4-rs"), Some("mdf4-rs.yml"));
-        assert_eq!(
-            primary_workflow("sigma-racer-wingman"),
-            Some("yocto-virt.yml")
-        );
+        assert_eq!(primary_workflow("sigma-diagnostics"), Some("ci.yml"));
+        assert_eq!(primary_workflow("dbc-rs"), Some("ci.yml"));
+        assert_eq!(primary_workflow("mdf4-rs"), Some("ci.yml"));
+        assert_eq!(primary_workflow("sigma-racer-wingman"), Some("ci.yml"));
         assert_eq!(primary_workflow("sigma-racer"), None);
+        assert_eq!(primary_workflow("design-resources"), None);
         assert_eq!(primary_workflow("sigma-racer-vehicle"), Some("ci.yml"));
         assert_eq!(primary_workflow("updates"), Some("ci.yml"));
         assert_eq!(primary_workflow("not-a-repo"), None);
@@ -457,8 +461,7 @@ mod tests {
         let mut repo = sample_repo("dbc-rs");
         repo.build = Some(BuildStatus {
             state: crate::repos::BuildState::Passing,
-            url: "https://github.com/sigmatactical-org/dbc-rs/actions/workflows/dbc-rs.yml"
-                .to_string(),
+            url: "https://github.com/sigmatactical-org/dbc-rs/actions/workflows/ci.yml".to_string(),
         });
         let sections = build_sections(vec![repo]);
         let enriched = &sections
