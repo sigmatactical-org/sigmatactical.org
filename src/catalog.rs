@@ -1,41 +1,15 @@
 //! Curated copy and grouping for repositories shown on sigmatactical.org.
 
-use crate::repos::{BuildStatus, RepoView};
+mod enriched_repo;
+mod repo_meta;
+mod repo_section;
+mod section_meta;
+pub use enriched_repo::EnrichedRepo;
+pub(crate) use repo_meta::RepoMeta;
+pub use repo_section::RepoSection;
+pub(crate) use section_meta::SectionMeta;
 
-/// A themed group of repositories with an introduction.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RepoSection {
-    pub id: &'static str,
-    pub title: &'static str,
-    pub intro: &'static str,
-    pub repos: Vec<EnrichedRepo>,
-}
-
-/// Repository row enriched with editorial relevance text.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EnrichedRepo {
-    pub name: String,
-    pub url: String,
-    pub description: String,
-    pub relevance: String,
-    pub language: String,
-    pub stars: u32,
-    pub build: Option<BuildStatus>,
-}
-
-struct RepoMeta {
-    section_id: &'static str,
-    relevance: &'static str,
-    description: &'static str,
-    order: u16,
-}
-
-struct SectionMeta {
-    id: &'static str,
-    title: &'static str,
-    intro: &'static str,
-    order: u16,
-}
+use crate::repos::RepoView;
 
 const SECTIONS: &[SectionMeta] = &[
     SectionMeta {

@@ -1,11 +1,25 @@
 //! Fetch and cache public repositories for the configured GitHub organization.
 
-use std::sync::OnceLock;
-use std::time::{Duration, Instant};
+mod build_state;
+mod build_status;
+mod cache_state;
+mod github_repo;
+mod repo_view;
+mod repos_cache;
+mod repos_error;
+mod workflow_run;
+mod workflow_runs_response;
+pub use build_state::BuildState;
+pub use build_status::BuildStatus;
+pub(crate) use cache_state::CacheState;
+pub(crate) use github_repo::GithubRepo;
+pub use repo_view::RepoView;
+pub(crate) use repos_cache::ReposCache;
+pub use repos_error::ReposError;
+pub(crate) use workflow_run::WorkflowRun;
+pub(crate) use workflow_runs_response::WorkflowRunsResponse;
 
-use serde::Deserialize;
-use thiserror::Error;
-use tokio::sync::RwLock;
+use std::time::Duration;
 
 use crate::config;
 
@@ -14,149 +28,6 @@ use crate::config;
 // unauthenticated rate limit. Set STORG_GITHUB_TOKEN to lift the limit.
 const CACHE_TTL: Duration = Duration::from_secs(30 * 60);
 const USER_AGENT: &str = "sigmatactical-org/0.1 (+https://sigmatactical.org)";
-
-/// Outcome of a repository's latest CI run on its default branch.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BuildState {
-    Passing,
-    Failing,
-    Pending,
-}
-
-impl BuildState {
-    /// Bootstrap contextual class for the status pill.
-    #[must_use]
-    pub const fn css_class(self) -> &'static str {
-        match self {
-            BuildState::Passing => "text-bg-success",
-            BuildState::Failing => "text-bg-danger",
-            BuildState::Pending => "text-bg-secondary",
-        }
-    }
-
-    /// Human-readable label for the status pill.
-    #[must_use]
-    pub const fn label(self) -> &'static str {
-        match self {
-            BuildState::Passing => "CI passing",
-            BuildState::Failing => "CI failing",
-            BuildState::Pending => "CI pending",
-        }
-    }
-
-    fn from_run(status: &str, conclusion: Option<&str>) -> Self {
-        if status != "completed" {
-            return BuildState::Pending;
-        }
-        match conclusion {
-            Some("success") => BuildState::Passing,
-            Some("failure" | "timed_out" | "startup_failure" | "cancelled") => BuildState::Failing,
-            _ => BuildState::Pending,
-        }
-    }
-}
-
-/// Build status shown on a repository card (state + link to the workflow runs).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct BuildStatus {
-    pub state: BuildState,
-    pub url: String,
-}
-
-/// One repository row on the home page.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RepoView {
-    pub name: String,
-    pub url: String,
-    pub description: String,
-    pub language: String,
-    pub stars: u32,
-    pub default_branch: String,
-    pub build: Option<BuildStatus>,
-}
-
-#[derive(Debug, Error)]
-pub enum ReposError {
-    #[error("HTTP request failed: {0}")]
-    Http(#[from] reqwest::Error),
-    #[error("GitHub API error: {0}")]
-    Api(String),
-}
-
-#[derive(Debug, Deserialize)]
-struct GithubRepo {
-    name: String,
-    html_url: String,
-    description: Option<String>,
-    language: Option<String>,
-    stargazers_count: u32,
-    archived: bool,
-    fork: bool,
-    #[serde(default)]
-    default_branch: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct WorkflowRunsResponse {
-    #[serde(default)]
-    workflow_runs: Vec<WorkflowRun>,
-}
-
-#[derive(Debug, Deserialize)]
-struct WorkflowRun {
-    status: String,
-    conclusion: Option<String>,
-}
-
-struct CacheState {
-    repos: Option<Vec<RepoView>>,
-    fetched_at: Option<Instant>,
-}
-
-impl CacheState {
-    const fn empty() -> Self {
-        Self {
-            repos: None,
-            fetched_at: None,
-        }
-    }
-
-    fn is_fresh(&self) -> bool {
-        self.repos
-            .as_ref()
-            .is_some_and(|_| self.fetched_at.is_some_and(|at| at.elapsed() < CACHE_TTL))
-    }
-}
-
-struct ReposCache {
-    client: reqwest::Client,
-    state: RwLock<CacheState>,
-}
-
-impl ReposCache {
-    fn global() -> &'static ReposCache {
-        static CACHE: OnceLock<ReposCache> = OnceLock::new();
-        CACHE.get_or_init(|| ReposCache {
-            client: reqwest::Client::new(),
-            state: RwLock::new(CacheState::empty()),
-        })
-    }
-
-    async fn list(&self) -> Result<Vec<RepoView>, ReposError> {
-        {
-            let state = self.state.read().await;
-            if state.is_fresh() {
-                return Ok(state.repos.clone().unwrap_or_default());
-            }
-        }
-
-        let repos = fetch_org_repos(&self.client).await?;
-        let mut state = self.state.write().await;
-        state.repos = Some(repos.clone());
-        state.fetched_at = Some(Instant::now());
-        Ok(repos)
-    }
-}
 
 /// Apply the standard GitHub headers (and auth token, when configured).
 fn github_headers(builder: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
