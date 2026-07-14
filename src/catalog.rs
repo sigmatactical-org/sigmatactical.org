@@ -422,6 +422,7 @@ pub fn build_sections(repos: Vec<RepoView>) -> Vec<RepoSection> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repos::BuildStatus;
 
     fn sample_repo(name: &str) -> RepoView {
         RepoView {
