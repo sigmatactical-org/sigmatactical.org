@@ -1,5 +1,8 @@
 # sigmatactical.org
 
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
+[![MSRV](https://img.shields.io/badge/MSRV-1.97.0-blue.svg)](https://www.rust-lang.org)
+
 Public open-source showcase for [sigmatactical.org](https://sigmatactical.org). Lists
 repositories from the configured GitHub organization using the shared
 [sigma-theme](https://github.com/sigmatactical-org/sigma-theme) chrome.
@@ -49,3 +52,7 @@ docker build -f Dockerfile build/image
 © Sigma Tactical Group. **All rights reserved.**
 
 The Sigma Tactical Group name, logos, marks, artwork, and visual identity are **proprietary**. They are not covered by this repository's source-code license. See [BRANDING.md](BRANDING.md).
+
+## License
+
+Licensed under either of the Apache License, Version 2.0 or the MIT license, at your option.
