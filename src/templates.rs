@@ -37,7 +37,7 @@ struct IndexTemplate {
 /// Returns [`askama::Error`] when template rendering fails.
 pub fn render_index_html(repos: &[RepoView], repos_error: &str) -> Result<String, askama::Error> {
     IndexTemplate {
-        site_header: SiteHeader::new("Sigma Tactical Group"),
+        site_header: SiteHeader::home(),
         site_nav: site_nav()?,
         github_org: crate::config::github_org(),
         sections: crate::catalog::build_sections(repos.to_vec()),
