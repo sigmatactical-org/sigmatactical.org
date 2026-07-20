@@ -1,8 +1,5 @@
 //! [`RepoMeta`].
 
-#[allow(unused_imports)]
-use super::*;
-
 /// Hand-curated metadata for one repository.
 pub(crate) struct RepoMeta {
     pub(crate) section_id: &'static str,

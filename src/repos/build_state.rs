@@ -1,8 +1,5 @@
 //! [`BuildState`].
 
-#[allow(unused_imports)]
-use super::*;
-
 /// Outcome of a repository's latest CI run on its default branch.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BuildState {

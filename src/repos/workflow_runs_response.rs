@@ -1,7 +1,6 @@
 //! [`WorkflowRunsResponse`].
 
-#[allow(unused_imports)]
-use super::*;
+use super::WorkflowRun;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]

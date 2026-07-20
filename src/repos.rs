@@ -2,24 +2,23 @@
 
 mod build_state;
 mod build_status;
-mod cache_state;
 mod github_repo;
 mod repo_view;
-mod repos_cache;
 mod repos_error;
 mod workflow_run;
 mod workflow_runs_response;
 pub use build_state::BuildState;
 pub use build_status::BuildStatus;
-pub(crate) use cache_state::CacheState;
 pub(crate) use github_repo::GithubRepo;
 pub use repo_view::RepoView;
-pub(crate) use repos_cache::ReposCache;
 pub use repos_error::ReposError;
 pub(crate) use workflow_run::WorkflowRun;
 pub(crate) use workflow_runs_response::WorkflowRunsResponse;
 
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
+
+use sigma_theme::cache::TtlCache;
 
 use crate::config;
 
@@ -28,6 +27,16 @@ use crate::config;
 // unauthenticated rate limit. Set STORG_GITHUB_TOKEN to lift the limit.
 const CACHE_TTL: Duration = Duration::from_secs(30 * 60);
 const USER_AGENT: &str = "sigmatactical-org/0.1 (+https://sigmatactical.org)";
+
+/// Process-wide listing cache: single-flight refresh, stale-on-error, and
+/// `Arc` handles so a request never deep-clones the listing.
+static REPOS: TtlCache<Vec<RepoView>> = TtlCache::new();
+
+/// Process-wide HTTP client (connection pooling, TLS session reuse).
+fn client() -> &'static reqwest::Client {
+    static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+    CLIENT.get_or_init(reqwest::Client::new)
+}
 
 /// Apply the standard GitHub headers (and auth token, when configured).
 fn github_headers(builder: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
@@ -144,8 +153,17 @@ fn entries_to_views(entries: Vec<GithubRepo>) -> Vec<RepoView> {
 }
 
 /// Returns cached public repositories for the configured GitHub org.
-pub async fn list_public_repos() -> Result<Vec<RepoView>, ReposError> {
-    ReposCache::global().list().await
+///
+/// Concurrent misses share one upstream fetch; when a refresh fails the last
+/// good listing keeps being served.
+///
+/// # Errors
+///
+/// Returns [`ReposError`] only when the fetch fails with nothing cached.
+pub async fn list_public_repos() -> Result<Arc<Vec<RepoView>>, ReposError> {
+    REPOS
+        .get_or_fetch(CACHE_TTL, || fetch_org_repos(client()))
+        .await
 }
 
 #[cfg(test)]

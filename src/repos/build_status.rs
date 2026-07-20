@@ -1,7 +1,6 @@
 //! [`BuildStatus`].
 
-#[allow(unused_imports)]
-use super::*;
+use super::BuildState;
 
 /// Build status shown on a repository card (state + link to the workflow runs).
 #[derive(Debug, Clone, PartialEq, Eq)]

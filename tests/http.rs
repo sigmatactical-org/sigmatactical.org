@@ -1,4 +1,6 @@
-//! Integration tests: exercise the HTTP surface from the crate root (static files, paths).
+//! Integration tests: site-specific content and assets served over the HTTP surface.
+//! Shared scaffold behavior (/up, 404/405, security headers, cache-control) is
+//! tested in `sigma-theme`.
 
 use sigmatactical_org::routes;
 
@@ -21,18 +23,6 @@ async fn get_root_is_html() {
     let body = std::str::from_utf8(res.body()).expect("utf-8 body");
     assert!(body.contains("sigma-dial-root"));
     assert!(body.contains("Own your vehicle"));
-}
-
-#[tokio::test]
-async fn get_unknown_path_is_404() {
-    let res = warp::test::request()
-        .method("GET")
-        .path("/no-such-page")
-        .reply(&routes())
-        .await;
-    assert_eq!(res.status(), 404);
-    let body = std::str::from_utf8(res.body()).expect("utf-8 body");
-    assert!(body.contains("Oops"), "expected friendly 404 copy");
 }
 
 #[tokio::test]

@@ -1,29 +1,17 @@
-fn normalize_base_url(url: &str) -> String {
-    let mut url = url.trim().to_string();
-    if !url.ends_with('/') {
-        url.push('/');
-    }
-    url
-}
+//! Environment-driven configuration: public base URLs and GitHub API access.
+
+use sigma_pg::clients::http::env_url;
 
 /// Public base URL of this site (e.g. `http://127.0.0.1:8080/`).
 #[must_use]
 pub fn public_base_url() -> String {
-    std::env::var("STORG_PUBLIC_BASE_URL")
-        .ok()
-        .filter(|s| !s.trim().is_empty())
-        .map(|s| normalize_base_url(&s))
-        .unwrap_or_else(|| "http://127.0.0.1:8080/".to_string())
+    env_url("STORG_PUBLIC_BASE_URL", "http://127.0.0.1:8080/")
 }
 
 /// Public base URL of the identity BFF (e.g. `http://127.0.0.1:3000/`).
 #[must_use]
 pub fn identity_public_base_url() -> String {
-    std::env::var("STORG_IDENTITY_PUBLIC_URL")
-        .ok()
-        .filter(|s| !s.trim().is_empty())
-        .map(|s| normalize_base_url(&s))
-        .unwrap_or_else(|| "http://127.0.0.1:3000/".to_string())
+    env_url("STORG_IDENTITY_PUBLIC_URL", "http://127.0.0.1:3000/")
 }
 
 /// Browser origin of the identity BFF for CSP `connect-src` (no trailing slash).
@@ -35,21 +23,13 @@ pub fn identity_public_origin() -> String {
 /// Public base URL of the contact service for navbar links.
 #[must_use]
 pub fn contact_public_base_url() -> String {
-    std::env::var("STORG_CONTACT_PUBLIC_URL")
-        .ok()
-        .filter(|s| !s.trim().is_empty())
-        .map(|s| normalize_base_url(&s))
-        .unwrap_or_else(|| "http://127.0.0.1:8083/".to_string())
+    env_url("STORG_CONTACT_PUBLIC_URL", "http://127.0.0.1:8083/")
 }
 
 /// Public base URL of the cart service for navbar links.
 #[must_use]
 pub fn cart_public_base_url() -> String {
-    std::env::var("STORG_CART_PUBLIC_URL")
-        .ok()
-        .filter(|s| !s.trim().is_empty())
-        .map(|s| normalize_base_url(&s))
-        .unwrap_or_else(|| "http://127.0.0.1:8084/".to_string())
+    env_url("STORG_CART_PUBLIC_URL", "http://127.0.0.1:8084/")
 }
 
 /// GitHub organization whose public repositories are listed on the home page.

@@ -1,7 +1,6 @@
 //! [`RepoSection`].
 
-#[allow(unused_imports)]
-use super::*;
+use super::EnrichedRepo;
 
 /// A themed group of repositories with an introduction.
 #[derive(Debug, Clone, PartialEq, Eq)]

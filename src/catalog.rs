@@ -18,35 +18,30 @@ const SECTIONS: &[SectionMeta] = &[
         intro: "Firmware, specifications, and safety-critical code for Sigma Racer. These \
 repositories are the reason we open-source: so you can own, audit, and extend the \
 software that runs in your vehicle.",
-        order: 10,
     },
     SectionMeta {
         id: "data",
         title: "Data formats & bench tooling",
         intro: "Rust libraries for CAN databases and measurement logs—the same formats we \
 use on the bench, in validation, and when bridging vehicle networks to analysis tools.",
-        order: 20,
     },
     SectionMeta {
         id: "commerce",
         title: "Commerce services",
         intro: "The transactional backbone behind sigmatactical.store: catalog, cart, \
 checkout, and order flow, built as small services you can run and adapt.",
-        order: 30,
     },
     SectionMeta {
         id: "platform",
         title: "Shared platform",
         intro: "Authentication, persistence, theming, bot protection, and Kubernetes \
 manifests reused across every public-facing Sigma Tactical Group service.",
-        order: 40,
     },
     SectionMeta {
         id: "sites",
         title: "Public websites",
         intro: "Themed landing and information sites that share sigma-theme chrome and \
 link into the rest of the stack.",
-        order: 50,
     },
 ];
 
@@ -362,7 +357,7 @@ pub fn primary_workflow(name: &str) -> Option<&'static str> {
     }
 }
 
-fn enrich(repo: RepoView) -> (EnrichedRepo, &'static str, u16) {
+fn enrich(repo: &RepoView) -> (EnrichedRepo, &'static str, u16) {
     let meta = meta_for(&repo.name);
     let section_id = meta.map(|m| m.section_id).unwrap_or("platform");
     let order = meta.map(|m| m.order).unwrap_or(900);
@@ -374,17 +369,17 @@ fn enrich(repo: RepoView) -> (EnrichedRepo, &'static str, u16) {
             .unwrap_or("Sigma Tactical Group open-source project.")
             .to_string()
     } else {
-        repo.description
+        repo.description.clone()
     };
     (
         EnrichedRepo {
-            name: repo.name,
-            url: repo.url,
+            name: repo.name.clone(),
+            url: repo.url.clone(),
             description,
-            relevance: relevance.to_string(),
-            language: repo.language,
+            relevance,
+            language: repo.language.clone(),
             stars: repo.stars,
-            build: repo.build,
+            build: repo.build.clone(),
         },
         section_id,
         order,
@@ -392,9 +387,10 @@ fn enrich(repo: RepoView) -> (EnrichedRepo, &'static str, u16) {
 }
 
 /// Group API results into editorial sections (known repos first, unknown in platform).
-pub fn build_sections(repos: Vec<RepoView>) -> Vec<RepoSection> {
-    let mut buckets: Vec<(EnrichedRepo, &'static str, u16)> =
-        repos.into_iter().map(enrich).collect();
+///
+/// Sections come out in [`SECTIONS`] order; empty ones are dropped.
+pub fn build_sections(repos: &[RepoView]) -> Vec<RepoSection> {
+    let mut buckets: Vec<(EnrichedRepo, &'static str, u16)> = repos.iter().map(enrich).collect();
 
     buckets.sort_by(|a, b| a.2.cmp(&b.2).then_with(|| a.0.name.cmp(&b.0.name)));
 
@@ -407,13 +403,6 @@ pub fn build_sections(repos: Vec<RepoView>) -> Vec<RepoSection> {
             repos: Vec::new(),
         })
         .collect();
-    sections.sort_by_key(|section| {
-        SECTIONS
-            .iter()
-            .find(|meta| meta.id == section.id)
-            .map(|meta| meta.order)
-            .unwrap_or(999)
-    });
 
     for (repo, section_id, _) in buckets {
         if let Some(section) = sections.iter_mut().find(|s| s.id == section_id) {
@@ -463,7 +452,7 @@ mod tests {
             state: crate::repos::BuildState::Passing,
             url: "https://github.com/sigmatactical-org/dbc-rs/actions/workflows/ci.yml".to_string(),
         });
-        let sections = build_sections(vec![repo]);
+        let sections = build_sections(&[repo]);
         let enriched = &sections
             .iter()
             .find(|s| s.id == "data")
@@ -477,7 +466,7 @@ mod tests {
 
     #[test]
     fn groups_vehicle_repos_into_first_section() {
-        let sections = build_sections(vec![
+        let sections = build_sections(&[
             sample_repo("store"),
             sample_repo("dbc-rs"),
             sample_repo("sigma-racer-efi"),
@@ -499,7 +488,7 @@ mod tests {
 
     #[test]
     fn uses_catalog_description_when_github_description_empty() {
-        let sections = build_sections(vec![sample_repo("mdf4-rs")]);
+        let sections = build_sections(&[sample_repo("mdf4-rs")]);
         let repo = &sections
             .iter()
             .find(|s| s.id == "data")

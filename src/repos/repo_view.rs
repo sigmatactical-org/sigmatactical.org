@@ -1,7 +1,6 @@
 //! [`RepoView`].
 
-#[allow(unused_imports)]
-use super::*;
+use super::BuildStatus;
 
 /// One repository row on the home page.
 #[derive(Debug, Clone, PartialEq, Eq)]
