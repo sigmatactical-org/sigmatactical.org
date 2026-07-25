@@ -86,9 +86,9 @@ const REPO_META: &[(&str, RepoMeta)] = &[
         "sigma-racer",
         RepoMeta {
             section_id: "vehicle",
-            relevance: "Authoritative build specs—mechanical, electrical, and system documents.",
-            description: "Sigma Racer build specifications and engineering source documents.",
-            order: 50,
+            relevance: "The whole Sigma Racer vehicle stack in one Cargo workspace: M7 safety firmware, EFI, telemetry, the vehicle daemon, and the cluster UI.",
+            description: "Sigma Racer monorepo — Cortex-M firmware (sidearm, efi), the VSS telemetry stack, the vehicle signal daemon, and the instrument cluster UI.",
+            order: 5,
         },
     ),
     (
@@ -134,6 +134,15 @@ const REPO_META: &[(&str, RepoMeta)] = &[
             relevance: "Read and write ASAM MDF4 logs from dyno, track, and field capture.",
             description: "Rust library for reading and writing ASAM MDF 4 measurement data files.",
             order: 20,
+        },
+    ),
+    (
+        "vss-map",
+        RepoMeta {
+            section_id: "data",
+            relevance: "Map raw vehicle signals to the COVESA Vehicle Signal Specification (VSS).",
+            description: "Rust library for mapping vehicle signals onto the COVESA VSS standard model.",
+            order: 30,
         },
     ),
     (
@@ -352,7 +361,7 @@ fn meta_for(name: &str) -> Option<&'static RepoMeta> {
 pub fn primary_workflow(name: &str) -> Option<&'static str> {
     match name {
         // Docs/asset repos with no CI pipeline.
-        "sigma-racer" | "design-resources" => None,
+        "design-resources" => None,
         other => meta_for(other).map(|_| "ci.yml"),
     }
 }
@@ -437,8 +446,9 @@ mod tests {
         assert_eq!(primary_workflow("sigma-diagnostics"), Some("ci.yml"));
         assert_eq!(primary_workflow("dbc-rs"), Some("ci.yml"));
         assert_eq!(primary_workflow("mdf4-rs"), Some("ci.yml"));
+        assert_eq!(primary_workflow("vss-map"), Some("ci.yml"));
         assert_eq!(primary_workflow("sigma-racer-wingman"), Some("ci.yml"));
-        assert_eq!(primary_workflow("sigma-racer"), None);
+        assert_eq!(primary_workflow("sigma-racer"), Some("ci.yml"));
         assert_eq!(primary_workflow("design-resources"), None);
         assert_eq!(primary_workflow("sigma-racer-vehicle"), Some("ci.yml"));
         assert_eq!(primary_workflow("updates"), Some("ci.yml"));
