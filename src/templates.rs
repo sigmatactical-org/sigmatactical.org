@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 
 use askama::Template;
 use sigma_theme::copyright_years;
-use sigma_theme::nav::SiteHeader;
+use sigma_theme::nav::{SiteHeader, site_menu};
 use sigma_theme::site_nav::SiteChrome;
 
 use index_template::IndexTemplate;
@@ -41,7 +41,9 @@ fn site_nav() -> Result<&'static str, askama::Error> {
 /// Returns [`askama::Error`] when template rendering fails.
 pub fn render_index_html(repos: &[RepoView], repos_error: &str) -> Result<String, askama::Error> {
     IndexTemplate {
-        site_header: SiteHeader::home(),
+        // This site's wordmark is its own domain, all-caps in the brand font;
+        // otherwise the standard marketing menu (nothing highlighted), as in home().
+        site_header: SiteHeader::new("SIGMATACTICAL.ORG").with_menu(site_menu(None)),
         site_nav: site_nav()?,
         github_org: config::github_org(),
         sections: crate::catalog::build_sections(repos),
