@@ -8,21 +8,11 @@ mod repos;
 mod templates;
 
 use std::convert::Infallible;
-use std::sync::{Arc, OnceLock};
+use std::sync::Arc;
 
 use warp::{Filter, Rejection, Reply};
 
 pub use sigma_theme::copyright_years;
-
-/// Identity origin for the CSP `connect-src`, resolved once.
-///
-/// `sigma_theme::warp::security_headers` returns `impl Filter + 'static`, which
-/// (edition 2024 RPIT capture rules) makes its `&str` argument `&'static str`;
-/// caching the value here supplies that lifetime.
-fn identity_origin() -> &'static str {
-    static ORIGIN: OnceLock<String> = OnceLock::new();
-    ORIGIN.get_or_init(config::identity_public_origin)
-}
 
 /// Render the home page from the cached repository listing. A listing failure
 /// with nothing cached degrades to the "temporarily unavailable" copy rather
@@ -37,7 +27,7 @@ async fn index_page() -> Result<impl Reply, Rejection> {
     };
     templates::render_index_html(&repos, &repos_error)
         .map(warp::reply::html)
-        .map_err(|_| warp::reject::custom(sigma_theme::warp::TemplateError))
+        .map_err(|e| sigma_theme::warp::internal_rejection("render sigmatactical.org index", e))
 }
 
 fn index_route() -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
@@ -53,7 +43,7 @@ pub fn routes() -> impl Filter<Extract = (impl Reply,), Error = Infallible> + Cl
             index_route(),
             sigma_pg::health::warp::health_routes("sigmatactical-org", None),
         ),
-        identity_origin(),
+        config::identity_public_origin(),
     )
 }
 

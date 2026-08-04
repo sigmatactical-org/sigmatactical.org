@@ -18,6 +18,8 @@ repositories from the configured GitHub organization using the shared
 | `STORG_CONTACT_PUBLIC_URL` | Contact service for nav |
 | `STORG_CART_PUBLIC_URL` | Cart service for nav |
 | `STORG_GITHUB_ORG` | GitHub org to list (default `sigmatactical-org`) |
+| `STORG_GITHUB_TOKEN` | Token for the GitHub API; falls back to `GITHUB_TOKEN`. Unset means unauthenticated requests, which work for public data at a lower rate limit |
+| `STORG_GITHUB_API_BASE` | GitHub API base URL, for pointing tests at a stub (default `https://api.github.com`) |
 
 ## GitHub metadata
 
@@ -31,11 +33,31 @@ Curated repository descriptions, production homepages, and topics live in
 ## Local dev
 
 ```bash
-./scripts/prepare-local.sh
 cargo run
 ```
 
-Expects sibling `../theme` in the monorepo, or clones theme in CI.
+### Shared crates
+
+`sigma-theme` and `sigma-pg` are pinned git dependencies, so a
+fresh clone builds with nothing but `cargo`: the revision in `Cargo.toml` is
+fetched, and `build.rs` writes the `askama.toml` that points at sigma-theme's
+templates wherever Cargo put them.
+
+When one of those crates is checked out beside this repo and you are editing it,
+link the checkouts so your edits are picked up without a push:
+
+```bash
+./scripts/prepare-local.sh
+```
+
+That writes `[patch]` entries into `.cargo/config.toml` (gitignored) for the
+crates it finds and leaves the rest on their pinned revision; it prints what it
+linked. Undo by deleting the file. Note that building against a linked checkout
+rewrites `Cargo.lock` into path form — don't commit that; `platform`'s
+`scripts/relock.sh` restores the git-resolved lockfile CI expects.
+
+Bumping a shared crate is `platform/scripts/pin-shared-revs.sh <crate>` after
+that crate is pushed, which updates every consumer's pin at once.
 
 ## Docker
 
