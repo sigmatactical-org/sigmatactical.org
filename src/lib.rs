@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 
 mod catalog;
-mod config;
+pub mod config;
 mod repos;
 mod templates;
 

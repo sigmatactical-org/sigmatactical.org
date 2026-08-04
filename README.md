@@ -8,7 +8,16 @@ Public open-source showcase for [sigmatactical.org](https://sigmatactical.org). 
 repositories from the configured GitHub organization using the shared
 [sigma-theme](https://github.com/sigmatactical-org/sigma-theme) chrome.
 
-## Environment
+## Features
+
+Curated repository descriptions, production homepages, and topics live in
+`scripts/sync-github-metadata.sh`. Run after editing copy in `src/catalog.rs`:
+
+```bash
+./scripts/sync-github-metadata.sh
+```
+
+## Configuration
 
 | Variable | Purpose |
 | --- | --- |
@@ -21,16 +30,7 @@ repositories from the configured GitHub organization using the shared
 | `STORG_GITHUB_TOKEN` | Token for the GitHub API; falls back to `GITHUB_TOKEN`. Unset means unauthenticated requests, which work for public data at a lower rate limit |
 | `STORG_GITHUB_API_BASE` | GitHub API base URL, for pointing tests at a stub (default `https://api.github.com`) |
 
-## GitHub metadata
-
-Curated repository descriptions, production homepages, and topics live in
-`scripts/sync-github-metadata.sh`. Run after editing copy in `src/catalog.rs`:
-
-```bash
-./scripts/sync-github-metadata.sh
-```
-
-## Local dev
+## Development
 
 ```bash
 cargo run
@@ -66,11 +66,11 @@ that crate is pushed, which updates every consumer's pin at once.
 docker build -f Dockerfile build/image
 ```
 
-## Copyright
+## Brand & artwork
+
+### Copyright
 
 © Sigma Tactical Group. All rights reserved.
-
-## Brand & artwork
 
 © Sigma Tactical Group. **All rights reserved.**
 
